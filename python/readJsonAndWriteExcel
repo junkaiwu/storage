@@ -1,0 +1,270 @@
+import json
+import requests
+import openpyxl
+import os
+import ssl
+import sys
+import time
+import datetime
+from datetime import timedelta
+from openpyxl import Workbook
+from openpyxl.styles import NamedStyle, Font, Border, Side,PatternFill
+from openpyxl.styles import PatternFill, Border, Side, Alignment, Protection, Font
+from openpyxl.styles import colors
+from openpyxl.utils import get_column_letter
+DEBUG = 0
+
+#*******************************************************************************************************************
+
+BY_WALKING = 'walking'
+BY_BUS     = 'transit/integrated'
+BY_DRIVING = 'driving'
+
+file_dir ='E:/work/SmartBus/jsonpath'
+keyStr = '6faeb803fd01a462fb31aed4fa1f970f'
+
+
+proxies = {"http": "http://donghe:123asdZXC@proxy.neusoft.com:8080/",
+           "https": "http://donghe:123asdZXC@proxy.neusoft.com:8080/"
+           }
+
+# load file name
+def file_name(file_dir):
+    for root, dirs, files in os.walk(file_dir):
+        if(DEBUG):
+            print('root_dir:', root)  # 当前目录路径
+            print('sub_dirs:', dirs)  # 当前路径下所有子目录
+            print('files:', files)  # 当前路径下所有非目录子文件
+            print('files.size:', len(files))
+    return files
+
+
+#read json information
+def load_json(file_dir,file_name):
+    with open(file_dir+'/'+file_name, encoding='utf-8') as f:
+        line = f.readline()
+        d = json.loads(line)
+        if (DEBUG):
+            startGeo = d['startGeo']
+            arriveGeo = d['arriveGeo']
+
+            print(startGeo, arriveGeo)
+        f.close()
+    return d
+
+def request_result_gaode(dictionary_log,type):
+    start_geo = dictionary_log['startGeo']
+    arrive_geo = dictionary_log['arriveGeo']
+    origin_latitude = str(start_geo['lat'])
+    origin_longitude = str(start_geo['lon'])
+    destination_latitude = str(arrive_geo['lat'])
+    destination_longitude = str(arrive_geo['lon'])
+
+    target_web ='https://restapi.amap.com/v3/direction/'+type+'?origin='+origin_longitude+','+origin_latitude+'&destination='+destination_longitude+','+destination_latitude+'&key='+keyStr
+    # request tar web get result
+    if (DEBUG):
+        print(target_web)
+    requests.packages.urllib3.disable_warnings()
+    req = requests.get(url=target_web, proxies=proxies, verify=False)
+
+    if(json.loads(req.text)['status'] == '1'):
+        # parse the data of wanted
+        d = json.loads(req.text)['route']['paths'][0]
+        distance = d['distance']
+        duration = d['duration']
+        if (DEBUG):
+            print('distance:', distance, 'duration:', duration)
+    else:
+        distance = json.loads(req.text)['status']
+        duration = json.loads(req.text)['info']
+
+    return distance,duration
+
+
+# write excel
+def write_excel(row, column, str):
+    file_excel = openpyxl.load_workbook('chatPy.xlsx')  # 创建工作簿
+    index = 0
+    sheet_names = file_excel.sheetnames
+    sheet_current = file_excel[sheet_names[index]] # index为0为第一张表
+    #sheet_current = file_excel.get_sheet_by_name(sheet_names[index])  # index为0为第一张表
+    # 生成后续
+    sheet_current.cell(row, column).value = str
+    sheet_current.cell(row, column).alignment = Alignment(horizontal='right' )  # 水平居中，垂直居
+    file_excel.save("chatPy.xlsx")  # 保存文件
+
+
+def write_title():
+    file_excel = openpyxl.load_workbook('chatPy.xlsx')  # 创建工作簿
+    index = 0
+    sheet_names = file_excel.sheetnames
+    sheet_current = file_excel[sheet_names[index]]   # index为0为第一张表
+    #   title name
+    title_list = ['arriveGeo', 'destination', 'distance',' duration']
+    num_row  = 2
+    sheet_current.cell(num_row, 1).value = title_list[0]
+    sheet_current.cell(num_row, 3).value = title_list[1]
+    sheet_current.cell(num_row, 5).value = title_list[2]
+    sheet_current.cell(num_row, 6).value = title_list[3]
+
+    title_list = ['lat', 'lon', 'longitude', 'latitude', 'distance', ' duration']
+    for i in range(len(title_list)):
+        sheet_current.cell(3, i+1).value = title_list[i]
+
+    fill = PatternFill("solid", fgColor="92D050")
+
+    for row in sheet_current['A2:CC3']:
+        for cell_one in row:
+            cell_one.fill = fill
+            cell_one.alignment = Alignment(horizontal='center', vertical='top')  # 水平居中，垂直居
+    file_excel.save("chatPy.xlsx")  # 保存文件
+
+
+def get_write_list(json_dictionary,distance,duration):
+    dictionary_show = [[0 for i in range(6)]  for j in range(len(json_dictionary))]
+
+    for i in range(len(json_dictionary)):
+        dictionary_show[i][0] = json_dictionary[i]['startGeo']['lon']
+        dictionary_show[i][1] = json_dictionary[i]['startGeo']['lat']
+        dictionary_show[i][2] = json_dictionary[i]['arriveGeo']['lon']
+        dictionary_show[i][3] = json_dictionary[i]['arriveGeo']['lat']
+        dictionary_show[i][4] = distance[i]
+        dictionary_show[i][5] = duration[i]
+
+        str_path_list = 'arriveGeo_' + str(i)
+        print('str_path_list',str_path_list)
+
+        #判断标签是否存在
+        if 'wujunkai' in json_dictionary[i]:
+            print('json_dictionary has wujunkai ')
+        else:
+            print('json_dictionary dont has wujunkai ')
+
+        arrivetime = json_dictionary[i]['timeData']['arrivetime']
+        print('arrivetime', arrivetime)
+
+        d = datetime.datetime.strptime(arrivetime, '%Y-%m-%d %H:%M:%S')
+        print('d', d)
+
+        startwaittime = json_dictionary[i]['timeData']['startwaittime']
+        c = datetime.datetime.strptime(startwaittime, '%Y-%m-%d %H:%M:%S')
+        print('startwaittime', startwaittime)
+        print('c', c)
+        delt_wait_time = d - c
+        write_excel(5, 1, str(delt_wait_time))
+        write_excel(6, 1, arrivetime[11:])
+        write_excel(7, 1, d)
+    return dictionary_show
+
+
+def write_content_list(show_list):
+
+    for i in range(len(show_list)):
+        for j in range(len(show_list[i])):
+            write_excel(i+4, j+1, show_list[i][j])
+        #sys.stdout.write("  已完成 :%.3f%%" % float((i+1)/ len(show_list) * 100) + '\r')
+        sys.stdout.write("writing :%d /  %d "%((i+1), len(show_list))+"    %.3f%%" % float((i+1)/ len(show_list) * 100) +'\r')
+        sys.stdout.flush()
+
+
+def set_width_col():
+    file_excel = openpyxl.load_workbook('chatPy.xlsx')  # 创建工作簿
+    index = 0
+    sheet_names = file_excel.sheetnames
+    sheet_current = file_excel[sheet_names[index]]  # index为0为第一张表
+    i = 0
+    col_width = []
+    for col in sheet_current.columns:
+        # 每行
+        for j in range(len(col)):
+            if j == 0:
+                # 数组增加一个元素
+                col_width.append(len(str(col[j].value)))
+            else:
+                # 获得每列中的内容的最大宽度
+                if col_width[i] < len(str(col[j].value)):
+                    col_width[i] = len(str(col[j].value))
+        i = i + 1
+    # 设置列宽
+    for i in range(len(col_width)):
+        # 根据列的数字返回字母
+        col_letter = get_column_letter(i + 1)
+        # 当宽度大于100，宽度设置为100
+        if col_width[i] > 100:
+            sheet_current.column_dimensions[col_letter].width = 100
+        # 只有当宽度大于10，才设置列宽
+        elif col_width[i] > 10:
+            sheet_current.column_dimensions[col_letter].width = col_width[i] + 2
+    file_excel.save("chatPy.xlsx")  # 保存文件
+
+# 添加边框 and 合并单元格
+def paint_side(start_row, start_column, end_row, end_column):
+    bd = Border(left=Side(border_style="thin",
+                          color='FF001000'),
+                right=Side(border_style="thin",
+                           color='FF110000'),
+                top=Side(border_style="thin",
+                         color='FF110000'),
+                bottom=Side(border_style="thin",
+                            color='FF110000'))
+    file_excel = openpyxl.load_workbook('chatPy.xlsx')  # 创建工作簿
+    index = 0
+    sheet_names = file_excel.sheetnames
+    sheet_current = file_excel[sheet_names[index]]  # index为0为第一张表
+
+    row = sheet_current.max_row
+    column = sheet_current.max_column
+    for i in range(start_row, end_row):
+        for j in range(start_column, end_column):
+            sheet_current.cell(i, j).border = bd
+
+    #  合并单元格
+    sheet_current.merge_cells('A2:B2')
+    sheet_current.merge_cells('E2:E3')
+    #sheet_current.merge_cells(start_row=1, start_column=5, end_row=2, end_column=5) #distance
+    sheet_current.merge_cells(start_row=2, start_column=6, end_row=3, end_column=6) #duration
+
+    file_excel.save("chatPy.xlsx")  # 保存文件
+
+
+
+
+#*********************************     main() **************************************************
+# get json files list
+fileList = file_name(file_dir)
+
+# load json
+json_dictionary = []
+for i in range(len(fileList)):
+    json_dictionary.append(load_json(file_dir, fileList[i]))
+
+# request result from 高德
+distance = []
+duration = []
+for i in range(len(json_dictionary)):
+    a, b = request_result_gaode(json_dictionary[i], BY_WALKING)
+    distance.append(a)
+    duration.append(b)
+
+
+# save the IN and OUT parameter  to excel
+# creat xlsx
+f = openpyxl.Workbook('chatPy.xlsx')  # 创建工作簿
+sheet1 = f.create_sheet()
+f.save("chatPy.xlsx")  # 保存文件
+# write title
+
+
+write_title()
+# prepare content_list
+content_list = get_write_list(json_dictionary, distance, duration)
+if((len(json_dictionary) == len(distance)) and (len(json_dictionary) == len(duration))):
+    write_content_list(content_list)
+    set_width_col()
+    paint_side(2, 1, 8, 6)
+    print('work finished ^_^                               ', end='')
+else:
+    print("error 1")
+
+
+'''
