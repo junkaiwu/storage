@@ -12,7 +12,7 @@ from openpyxl.styles import NamedStyle, Font, Border, Side,PatternFill
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Protection, Font
 from openpyxl.styles import colors
 from openpyxl.utils import get_column_letter
-DEBUG = 0
+DEBUG = 1
 
 #*******************************************************************************************************************
 
@@ -100,36 +100,158 @@ def write_title():
     sheet_names = file_excel.sheetnames
     sheet_current = file_excel[sheet_names[index]]   # index为0为第一张表
     #   title name
-    title_list = ['arriveGeo', 'destination', 'distance',' duration']
-    num_row  = 2
+    title_list = ['Target', 'Features']
+    num_row = 1
     sheet_current.cell(num_row, 1).value = title_list[0]
-    sheet_current.cell(num_row, 3).value = title_list[1]
-    sheet_current.cell(num_row, 5).value = title_list[2]
-    sheet_current.cell(num_row, 6).value = title_list[3]
+    sheet_current.cell(num_row, 4).value = title_list[1]
 
-    title_list = ['lat', 'lon', 'longitude', 'latitude', 'distance', ' duration']
+
+    title_list = ['待ち時間体験', '旅行時間体験', 'トータル体験',' 手机号', '手机ID', '机型', '年齢', '性別', '教育レベル', '職業', '年収',
+                  '理财收入','身高', '体重', '婚否', '子女数', '房贷数', '出行目的', '交通手段', '大行李数', '小行李数', '温度', '湿度', '天気', '風速',
+                  '出发地经纬度', '出发地POI', '已上车经纬度', '目的地经纬度', '目的地POI', '预计等待上车时间',
+                  '预计到着时间', '等待开始时间', '上车时间', '到着时间', '待ち時間', '旅行時間', '上车时间差值', '到着时间差',
+                  '步行距离距離', '步行时间', '拼车人数', '価格', '途中止回数', '途中止时间', '途中止经纬度1', '途中止经纬度2', '途中止经纬度3',
+                  '途中经纬度']
+    print('title_list length:', len(title_list))
+    num_row = 2
+    for i in range(25):
+        sheet_current.cell(num_row, i+1).value = title_list[i]
+
+    sheet_current.cell(num_row, 26).value = title_list[25]
+    sheet_current.cell(num_row, 28).value = title_list[26]
+    sheet_current.cell(num_row, 45).value = title_list[27]
+    sheet_current.cell(num_row, 47).value = title_list[28]
+    sheet_current.cell(num_row, 49).value = title_list[29]
+
+    print('title_list : ',len(title_list))
+    for i in range(66,81):
+        sheet_current.cell(num_row, i).value = title_list[i-35-1]
+
+    sheet_current.cell(num_row, 81).value = title_list[45]
+    sheet_current.cell(num_row, 83).value = title_list[46]
+    sheet_current.cell(num_row, 85).value = title_list[47]
+    sheet_current.cell(num_row, 87).value = title_list[48]
+    '''
+    '''
+
+    title_list = ['经度','纬度','病院','经度','纬度','经度','纬度','病院','经度','纬度','经度','纬度','经度','纬度','经度','纬度','时间戳']
+    '''
     for i in range(len(title_list)):
         sheet_current.cell(3, i+1).value = title_list[i]
+    '''
+
 
     fill = PatternFill("solid", fgColor="92D050")
 
-    for row in sheet_current['A2:CC3']:
+    for row in sheet_current['A2:CK3']:
         for cell_one in row:
             cell_one.fill = fill
-            cell_one.alignment = Alignment(horizontal='center', vertical='top')  # 水平居中，垂直居
+            cell_one.alignment = Alignment(horizontal='left', vertical='top')  # 水平居中，垂直居
     file_excel.save("chatPy.xlsx")  # 保存文件
 
 
 def get_write_list(json_dictionary,distance,duration):
-    dictionary_show = [[0 for i in range(6)]  for j in range(len(json_dictionary))]
+    dictionary_show = [[0 for i in range(89)]  for j in range(len(json_dictionary))]
 
     for i in range(len(json_dictionary)):
-        dictionary_show[i][0] = json_dictionary[i]['startGeo']['lon']
-        dictionary_show[i][1] = json_dictionary[i]['startGeo']['lat']
-        dictionary_show[i][2] = json_dictionary[i]['arriveGeo']['lon']
-        dictionary_show[i][3] = json_dictionary[i]['arriveGeo']['lat']
-        dictionary_show[i][4] = distance[i]
-        dictionary_show[i][5] = duration[i]
+        dictionary_show[i][0] = json_dictionary[i]['experienceData']['wait_time_experience']
+        dictionary_show[i][1] = json_dictionary[i]['experienceData']['driving_time_experience']
+        dictionary_show[i][2] = json_dictionary[i]['experienceData']['trip_experience']
+        dictionary_show[i][3] = json_dictionary[i]['userInfoData']['user_name']
+        dictionary_show[i][4] = json_dictionary[i]['userInfoData']['device_id']
+        dictionary_show[i][5] = json_dictionary[i]['brand']
+        dictionary_show[i][6] = json_dictionary[i]['userInfoData']['user_age']
+
+        dictionary_show[i][7] = json_dictionary[i]['userInfoData']['user_gender']
+        dictionary_show[i][8] = json_dictionary[i]['userInfoData']['user_education']
+        dictionary_show[i][9] = json_dictionary[i]['userInfoData']['user_occupation']
+        dictionary_show[i][10] = json_dictionary[i]['userInfoData']['user_annual_income']
+        dictionary_show[i][11] = json_dictionary[i]['userInfoData']['user_loan']
+
+
+        #dictionary_show[i][12] = json_dictionary[i]['userInfoData']['user_loan']# height
+        dictionary_show[i][12] = '--'  # height
+        #dictionary_show[i][13] = json_dictionary[i]['userInfoData']['']# weight
+        dictionary_show[i][13] = '--'
+        dictionary_show[i][14] = json_dictionary[i]['userInfoData']['user_marry']
+        dictionary_show[i][15] = json_dictionary[i]['userInfoData']['user_children']
+
+        dictionary_show[i][16] = json_dictionary[i]['userInfoData']['user_loan']
+        dictionary_show[i][17] = json_dictionary[i]['tripData']['purpose']
+        dictionary_show[i][18] = json_dictionary[i]['tripData']['carType']
+        dictionary_show[i][19] = json_dictionary[i]['tripData']['bigPackageNum']
+        dictionary_show[i][20] = json_dictionary[i]['tripData']['smallPackageNum']
+
+        dictionary_show[i][21] = json_dictionary[i]['weatherData']['temp']
+        dictionary_show[i][22] = json_dictionary[i]['weatherData']['humidity']
+        dictionary_show[i][23] = json_dictionary[i]['weatherData']['sky']
+        dictionary_show[i][24] = json_dictionary[i]['weatherData']['windspeed']
+
+        dictionary_show[i][24] = json_dictionary[i]['startGeo']['lon']
+        dictionary_show[i][25] = json_dictionary[i]['startGeo']['lat']
+
+        '''
+        出发地POI
+        '''
+
+        dictionary_show[i][44] = json_dictionary[i]['onCarGeo']['lon']
+        dictionary_show[i][45] = json_dictionary[i]['onCarGeo']['lat']
+
+        dictionary_show[i][46] = json_dictionary[i]['arriveGeo']['lon']
+        dictionary_show[i][47] = json_dictionary[i]['arriveGeo']['lat']
+
+        '''
+            目的地POI
+        '''
+        dictionary_show[i][65] = json_dictionary[i]['timeData']['estimateOnCarTime']
+        dictionary_show[i][66] = json_dictionary[i]['timeData']['estimateArriveTime']
+        dictionary_show[i][67] = json_dictionary[i]['timeData']['startWaitTime']
+
+        if 'onCarTime' in json_dictionary[i]['timeData']:
+            dictionary_show[i][68] = json_dictionary[i]['timeData']['onCarTime']
+        if 'arriveTime' in json_dictionary[i]['timeData']:
+            dictionary_show[i][69] = str(json_dictionary[i]['timeData']['arriveTime'])
+
+
+
+
+
+        d = datetime.datetime.strptime(dictionary_show[i][67], '%Y-%m-%d %H:%M:%S')
+        c = datetime.datetime.strptime(dictionary_show[i][68], '%Y-%m-%d %H:%M:%S')
+        waiting_time = c - d
+
+        dictionary_show[i][70] = str(waiting_time)  # 待ち時間
+
+        d = datetime.datetime.strptime(dictionary_show[i][68], '%Y-%m-%d %H:%M:%S')
+        c = datetime.datetime.strptime(dictionary_show[i][69], '%Y-%m-%d %H:%M:%S')
+        waiting_time = c - d
+        ''''''
+        dictionary_show[i][71] = str(waiting_time)  # 旅行時間
+
+        d = datetime.datetime.strptime(dictionary_show[i][68], '%H:%M:%S')
+        c = datetime.datetime.strptime(dictionary_show[i][69], '%Y-%m-%d %H:%M:%S')
+        waiting_time = c - d
+
+        dictionary_show[i][72] = json_dictionary[i]['timeData']['startWaitTime']  # 上车时间差值
+        dictionary_show[i][73] = json_dictionary[i]['timeData']['startWaitTime']  # 到着时间差
+
+
+        dictionary_show[i][74] = distance[i]  # 步行距离距離
+        dictionary_show[i][75] = json_dictionary[i]['tripData']['price']
+        dictionary_show[i][76] = json_dictionary[i]['tripData']['carpoolPersonNum']
+
+
+        dictionary_show[i][78] = len(json_dictionary[i]['carpoolingGeo']) #途中止回数
+
+        for k in range(len(json_dictionary[i]['carpoolingGeo'])):
+            dictionary_show[i][80 + k*2] = json_dictionary[i]['carpoolingGeo'][k]['lon']
+            dictionary_show[i][81 + k*2] = json_dictionary[i]['carpoolingGeo'][k]['lat']
+
+
+
+
+        #dictionary_show[i][4] = distance[i]
+        #dictionary_show[i][5] = duration[i]
 
         str_path_list = 'arriveGeo_' + str(i)
         print('str_path_list',str_path_list)
@@ -140,20 +262,12 @@ def get_write_list(json_dictionary,distance,duration):
         else:
             print('json_dictionary dont has wujunkai ')
 
-        arrivetime = json_dictionary[i]['timeData']['arrivetime']
-        print('arrivetime', arrivetime)
+        if 'arriveTime' in  json_dictionary[i]['timeData']:
+            arrivetime = json_dictionary[i]['timeData']['arriveTime']
+            print('arrivetime', arrivetime)
+        else:
+            print('arrivetime dont exit ')
 
-        d = datetime.datetime.strptime(arrivetime, '%Y-%m-%d %H:%M:%S')
-        print('d', d)
-
-        startwaittime = json_dictionary[i]['timeData']['startwaittime']
-        c = datetime.datetime.strptime(startwaittime, '%Y-%m-%d %H:%M:%S')
-        print('startwaittime', startwaittime)
-        print('c', c)
-        delt_wait_time = d - c
-        write_excel(5, 1, str(delt_wait_time))
-        write_excel(6, 1, arrivetime[11:])
-        write_excel(7, 1, d)
     return dictionary_show
 
 
@@ -174,6 +288,7 @@ def set_width_col():
     sheet_current = file_excel[sheet_names[index]]  # index为0为第一张表
     i = 0
     col_width = []
+
     for col in sheet_current.columns:
         # 每行
         for j in range(len(col)):
@@ -185,8 +300,12 @@ def set_width_col():
                 if col_width[i] < len(str(col[j].value)):
                     col_width[i] = len(str(col[j].value))
         i = i + 1
+
+
+
     # 设置列宽
     for i in range(len(col_width)):
+        #print('col_width %d :%d'%(i, col_width[i]))
         # 根据列的数字返回字母
         col_letter = get_column_letter(i + 1)
         # 当宽度大于100，宽度设置为100
@@ -219,10 +338,13 @@ def paint_side(start_row, start_column, end_row, end_column):
             sheet_current.cell(i, j).border = bd
 
     #  合并单元格
+    '''
     sheet_current.merge_cells('A2:B2')
     sheet_current.merge_cells('E2:E3')
     #sheet_current.merge_cells(start_row=1, start_column=5, end_row=2, end_column=5) #distance
     sheet_current.merge_cells(start_row=2, start_column=6, end_row=3, end_column=6) #duration
+    '''
+
 
     file_excel.save("chatPy.xlsx")  # 保存文件
 
@@ -260,11 +382,18 @@ write_title()
 content_list = get_write_list(json_dictionary, distance, duration)
 if((len(json_dictionary) == len(distance)) and (len(json_dictionary) == len(duration))):
     write_content_list(content_list)
+
+
+    paint_side(2, 1, 4, 90)
     set_width_col()
-    paint_side(2, 1, 8, 6)
     print('work finished ^_^                               ', end='')
 else:
     print("error 1")
 
 
 '''
+'''
+
+
+
+
