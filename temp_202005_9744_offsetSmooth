@@ -1,0 +1,94 @@
+
+      m_SetBackFlag = false;
+    }
+
+    bool bFlagFirstSmooth = false;
+	if(0 == m_ulMmProcCount)
+	{
+
+
+
+if(m_Transition == false)//get the first  point out circle
+                        {
+
+                            m_stMmResultFirstOutCircle = m_stMmResult;
+                            bFlagFirstSmooth = true;
+                            m_Transition = true;
+                        }
+
+
+ }
+
+            if((m_stMmResultLastInCircle.stVehicleAbsPos.Latitude  - m_stMmResult.stVehicleAbsPos.Latitude) != 0)
+            {
+                PointE.Latitude = m_stMmResultLastInCircle.stVehicleAbsPos.Latitude - lLengthCD/fLengthCA*(m_stMmResultLastInCircle.stVehicleAbsPos.Latitude  - m_stMmResult.stVehicleAbsPos.Latitude);
+            }
+            else
+            {
+                PointE.Latitude = m_stMmResultLastInCircle.stVehicleAbsPos.Latitude;
+            }
+            if (bFlagFirstSmooth == true)
+            {
+                OffsetSmoothFirstPoint(&PointE,m_stMmResult.fDirection);
+            }
+            m_stMmResult.stVehicleAbsPos = PointE;
+
+
+
+
+void CControl::OffsetSmoothFirstPoint(GeoLocation_t* Point,float fDirection)
+{
+    int32_t iDirection = floor(fDirection + 0.5);
+    if(Point != NULL)
+    {
+        SHORT sAzimuthDirection = iDirection * (-1);
+        while(0 > sAzimuthDirection)
+        {
+            sAzimuthDirection += ANGLE_DENOMINATOR;
+        }
+        sAzimuthDirection = Lib_convertAngleToAzimuth(sAzimuthDirection);
+        iDirection =  sAzimuthDirection;
+        iDirection = iDirection*360/65536;
+        if(0<iDirection && iDirection<90) // north east
+        {
+            Point->Longitude = Point->Longitude + VALUE_OFFSET_FIRST_SMOOTH;
+            Point->Latitude = Point->Latitude + VALUE_OFFSET_FIRST_SMOOTH;
+        }
+        else if(90<iDirection && iDirection<180) //south east
+        {
+            Point->Longitude = Point->Longitude + VALUE_OFFSET_FIRST_SMOOTH;
+            Point->Latitude = Point->Latitude - VALUE_OFFSET_FIRST_SMOOTH;
+        }
+        else if(0 > iDirection && iDirection >-90) //north west
+        {
+            Point->Longitude = Point->Longitude - VALUE_OFFSET_FIRST_SMOOTH;
+            Point->Latitude = Point->Latitude + VALUE_OFFSET_FIRST_SMOOTH;
+        }
+        else if(-90 > iDirection && iDirection >-180) // south west
+        {
+            Point->Longitude = Point->Longitude - VALUE_OFFSET_FIRST_SMOOTH;
+            Point->Latitude = Point->Latitude -VALUE_OFFSET_FIRST_SMOOTH;
+        }
+        else if(iDirection == 0) //north
+        {
+            Point->Latitude = Point->Latitude +VALUE_OFFSET_FIRST_SMOOTH;
+        }
+        else if(iDirection == 90)//east
+        {
+            Point->Longitude = Point->Longitude + VALUE_OFFSET_FIRST_SMOOTH;
+        }
+        else if(iDirection == 180 || iDirection == -180)//south
+        {
+            Point->Latitude = Point->Latitude - VALUE_OFFSET_FIRST_SMOOTH;
+        }
+        else if(iDirection == -90)//west
+        {
+            Point->Longitude = Point->Longitude - VALUE_OFFSET_FIRST_SMOOTH;
+        }
+        else
+        {
+            NFLOG_INFO(LOGTRACE_VEHICLE, " CControl::OffsetSmoothFirstPoint waring iDirection:%d\n",
+                       iDirection);
+        }
+    }
+}
